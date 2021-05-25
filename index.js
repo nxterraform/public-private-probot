@@ -6,16 +6,25 @@ module.exports = (app) => {
   // Your code here
   app.log.info("Yay, the app was loaded!");
 
-  app.on("issues.opened", async (context) => {
-    const issueComment = context.issue({
-      body: "Thanks for opening this issue!",
+
+  app.on("repository.created", async (context) => {
+    const visibilty = context.payload.repository.private;
+    while(!visibilty){
+      const issueStatement = context.issue({
+        title: "[Alert] Public repo created!!",
+        body: " Please change your repository visibility, Your repo is visible to internet"
+      });
+      const createIssueParams = Object.assign({}, context.repo(), issueStatement || {})
+      return context.octokit.issues.create(createIssueParams);
+    }
+    return;
+  });
+  app.on("repository.publicized", async (context) => {
+    const pub = context.issue({
+      title: "[Alert] Repo publicized!!",
+      body: "You changed your repository is Public to internet!!"
     });
-    return context.octokit.issues.createComment(issueComment);
+    return context.octokit.issues.create(pub);
   });
 
-  // For more information on building apps:
-  // https://probot.github.io/docs/
-
-  // To get your app running against GitHub, see:
-  // https://probot.github.io/docs/development/
 };
